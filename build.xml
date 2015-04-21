@@ -406,6 +406,8 @@
 
   <patternset id="files.tomcat-coyote">
     <include name="org/apache/coyote/**" />
+    <include name="io/netty/**" />
+    <include name="ch/**" />
     <!-- Remaining tomcat-util packages -->
     <include name="org/apache/tomcat/util/bcel/**" />
     <include name="org/apache/tomcat/util/collections/**" />

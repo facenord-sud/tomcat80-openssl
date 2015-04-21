@@ -55,9 +55,10 @@ public final class OpenSsl {
         }
 
         // If in the classpath, try to load the native library and initialize netty-tcnative.
-        if (cause == null) {
+        // NOTE: Rely on the AprLifecycleListener to load the native library
+        /*if (cause == null) {
             try {
-                NativeLibraryLoader.load("tcnative-1", SSL.class.getClassLoader());
+                NativeLibraryLoader.load("libtcnative-1", SSL.class.getClassLoader());
                 Library.initialize("provided");
                 SSL.initialize(null);
             } catch (Throwable t) {
@@ -65,7 +66,7 @@ public final class OpenSsl {
                 logger.error(
                         "Failed to load netty-tcnative; OpenSSLEngine will be unavailable. ", t);
             }
-        }
+        }*/
 
         UNAVAILABILITY_CAUSE = cause;
 
