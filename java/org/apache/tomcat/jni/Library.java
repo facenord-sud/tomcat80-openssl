@@ -17,7 +17,6 @@
 
 package org.apache.tomcat.jni;
 
-import java.io.File;
 
 /** Library
  *
@@ -26,58 +25,59 @@ import java.io.File;
 public final class Library {
 
     /* Default library names */
-    private static final String [] NAMES = {"tcnative-1", "libtcnative-1"};
+    private static final String [] NAMES = {"netty-tcnative", "libnetty-tcnative", "netty-tcnative-1", "libnetty-tcnative-1"};
     /*
      * A handle to the unique Library singleton instance.
      */
     private static Library _instance = null;
 
-    private Library() throws Throwable {
+    private Library()
+        throws Exception
+    {
         boolean loaded = false;
-        String path = System.getProperty("java.library.path");
-        String [] paths = path.split(File.pathSeparator);
         StringBuilder err = new StringBuilder();
         for (int i = 0; i < NAMES.length; i++) {
             try {
                 System.loadLibrary(NAMES[i]);
                 loaded = true;
-            } catch (ThreadDeath t) {
-                throw t;
-            } catch (VirtualMachineError t) {
-                // Don't use a Java 7 multiple exception catch so we can keep
-                // the JNI code identical between Tomcat 6/7/8
-                throw t;
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
+                if (t instanceof ThreadDeath) {
+                    throw (ThreadDeath) t;
+                }
+                if (t instanceof VirtualMachineError) {
+                    throw (VirtualMachineError) t;
+                }
                 String name = System.mapLibraryName(NAMES[i]);
-                for (int j = 0; j < paths.length; j++) {
+                String path = System.getProperty("java.library.path");
+                String sep = System.getProperty("path.separator");
+                String [] paths = path.split(sep);
+                for (int j=0; j<paths.length; j++) {
                     java.io.File fd = new java.io.File(paths[j] , name);
                     if (fd.exists()) {
-                        // File exists but failed to load
-                        throw t;
+                        t.printStackTrace();
                     }
                 }
-                if (i > 0) {
+                if ( i > 0)
                     err.append(", ");
-                }
                 err.append(t.getMessage());
             }
-            if (loaded) {
+            if (loaded)
                 break;
-            }
         }
         if (!loaded) {
-            StringBuilder names = new StringBuilder();
-            for (String name : NAMES) {
-                names.append(name);
-                names.append(", ");
-            }
-            throw new LibraryNotFoundError(names.substring(0, names.length() -2), err.toString());
+            err.append('(');
+            err.append(System.getProperty("java.library.path"));
+            err.append(')');
+            throw new UnsatisfiedLinkError(err.toString());
         }
     }
 
     private Library(String libraryName)
     {
-        System.loadLibrary(libraryName);
+        if (!"provided".equals(libraryName)) {
+            System.loadLibrary(libraryName);
+        }
     }
 
     /* create global TCN's APR pool
@@ -168,7 +168,7 @@ public final class Library {
      * @param libraryName the name of the library to load
      */
     public static boolean initialize(String libraryName)
-        throws Throwable
+        throws Exception
     {
         if (_instance == null) {
             if (libraryName == null)

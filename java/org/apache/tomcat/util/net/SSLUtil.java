@@ -23,7 +23,7 @@ import javax.net.ssl.TrustManager;
 
 public interface SSLUtil {
 
-    public SSLContext createSSLContext() throws Exception;
+    public SslContext createSSLContext() throws Exception;
 
     public KeyManager[] getKeyManagers() throws Exception;
 
@@ -43,7 +43,7 @@ public interface SSLUtil {
      *         the defaults for the underlying SSL implementation if
      *         the endpoint configuration does not specify any ciphers.
      */
-    public String[] getEnableableCiphers(SSLContext context);
+    public String[] getEnableableCiphers(SslContext context);
 
     /**
      * Determines the SSL protocol variants that can be enabled, based on the
@@ -57,6 +57,6 @@ public interface SSLUtil {
      *         the defaults for the underlying SSL implementation if
      *         the endpoint configuration does not specify any protocols.
      */
-    public String[] getEnableableProtocols(SSLContext context);
+    public String[] getEnableableProtocols(SslContext context);
 
 }

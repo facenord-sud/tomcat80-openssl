@@ -68,6 +68,7 @@ import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.Constants;
 import org.apache.tomcat.util.net.SSLUtil;
 import org.apache.tomcat.util.net.ServerSocketFactory;
+import org.apache.tomcat.util.net.SslContext;
 import org.apache.tomcat.util.net.jsse.openssl.OpenSSLCipherConfigurationParser;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -263,7 +264,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
     }
 
     @Override
-    public String[] getEnableableCiphers(SSLContext context) {
+    public String[] getEnableableCiphers(SslContext context) {
         String requestedCiphersStr = endpoint.getCiphers();
 
         if (ALLOW_ALL_SUPPORTED_CIPHERS.equals(requestedCiphersStr)) {
@@ -478,7 +479,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
                 wantClientAuth = true;
             }
 
-            SSLContext context = createSSLContext();
+            SslContext context = createSSLContext();
             context.init(getKeyManagers(), getTrustManagers(), null);
 
             // Configure SSL session cache
@@ -509,7 +510,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
     }
 
     @Override
-    public SSLContext createSSLContext() throws Exception {
+    public SslContext createSSLContext() throws Exception {
 
         // SSL protocol variant (e.g., TLS, SSL v3, etc.)
         String protocol = endpoint.getSslProtocol();
@@ -517,7 +518,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
             protocol = defaultProtocol;
         }
 
-        SSLContext context = SSLContext.getInstance(protocol);
+        SslContext context = SslContext.getInstance("org.apache.tomcat.util.net.jsse.JSSESslContext", protocol);
 
         return context;
     }
@@ -734,7 +735,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
     }
 
     @Override
-    public String[] getEnableableProtocols(SSLContext context) {
+    public String[] getEnableableProtocols(SslContext context) {
         String[] requestedProtocols = endpoint.getSslEnabledProtocolsArray();
         if ((requestedProtocols == null) || (requestedProtocols.length == 0)) {
             return defaultServerProtocols;

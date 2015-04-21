@@ -245,9 +245,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
     }
 
 
-    private SSLContext sslContext = null;
-    public SSLContext getSSLContext() { return sslContext;}
-    public void setSSLContext(SSLContext c) { sslContext = c;}
+    private SslContext sslContext = null;
+    public SslContext getSSLContext() { return sslContext;}
+    public void setSSLContext(SslContext c) { sslContext = c;}
     private String[] enabledCiphers;
     private String[] enabledProtocols;
 
