@@ -76,6 +76,7 @@ public class SecureNio2Channel extends Nio2Channel  {
         handshakeReadCompletionHandler = new CompletionHandler<Integer, SocketWrapper<Nio2Channel>>() {
             @Override
             public void completed(Integer result, SocketWrapper<Nio2Channel> attachment) {
+                System.out.println("Read HS: " + handshakeStatus + " result: " + result);
                 if (result.intValue() < 0) {
                     failed(new EOFException(), attachment);
                     return;
@@ -391,7 +392,6 @@ public class SecureNio2Channel extends Nio2Channel  {
             //prepare the buffer with the incoming data
             netInBuffer.flip();
             //call unwrap
-            System.out.println("HS: " + handshakeStatus + " " + netInBuffer.remaining());
             result = sslEngine.unwrap(netInBuffer, bufHandler.getReadBuffer());
             //compact the buffer, this is an optional method, wonder what would happen if we didn't
             netInBuffer.compact();

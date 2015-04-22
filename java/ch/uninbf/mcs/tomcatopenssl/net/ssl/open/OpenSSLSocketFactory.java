@@ -5,48 +5,28 @@
  */
 package ch.uninbf.mcs.tomcatopenssl.net.ssl.open;
 
-import ch.uninbf.mcs.tomcatopenssl.net.OpenSSLEndpoint;
-import static ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLContext.generateKeySpec;
-import java.io.ByteArrayInputStream;
+import static org.apache.tomcat.util.net.jsse.JSSESocketFactory.DEFAULT_KEY_PASS;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
+
 import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509KeyManager;
+
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.net.AbstractEndpoint;
-import org.apache.tomcat.util.net.Constants;
 import org.apache.tomcat.util.net.SSLUtil;
 import org.apache.tomcat.util.net.ServerSocketFactory;
 import org.apache.tomcat.util.net.SslContext;
-import org.apache.tomcat.util.net.jsse.JSSEKeyManager;
-import static org.apache.tomcat.util.net.jsse.JSSESocketFactory.DEFAULT_KEY_PASS;
 import org.apache.tomcat.util.net.jsse.openssl.OpenSSLCipherConfigurationParser;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  *
@@ -56,9 +36,6 @@ public class OpenSSLSocketFactory implements SSLUtil, ServerSocketFactory {
 
     private final AbstractEndpoint<?> endpoint;
 
-    public OpenSSLEndpoint getEndpoint() {
-        return (OpenSSLEndpoint) endpoint;
-    }
     private static final Log log = LogFactory.getLog(OpenSSLSocketFactory.class);
 
     private static final String defaultKeystoreFile
@@ -106,7 +83,7 @@ public class OpenSSLSocketFactory implements SSLUtil, ServerSocketFactory {
 
     @Override
     public KeyManager[] getKeyManagers() throws Exception {
-        KeyManager[] managers = {new OpenSSLKeyManager(getEndpoint().getCertChainFile(), getEndpoint().getKeyFile())};
+        KeyManager[] managers = {new OpenSSLKeyManager(endpoint.getTruststoreFile(), endpoint.getKeystoreFile())};
         return managers;
 //        String keystoreType = endpoint.getKeystoreType();
 //        if (keystoreType == null) {
