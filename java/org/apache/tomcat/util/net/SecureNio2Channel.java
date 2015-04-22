@@ -391,6 +391,7 @@ public class SecureNio2Channel extends Nio2Channel  {
             //prepare the buffer with the incoming data
             netInBuffer.flip();
             //call unwrap
+            System.out.println("HS: " + handshakeStatus + " " + netInBuffer.remaining());
             result = sslEngine.unwrap(netInBuffer, bufHandler.getReadBuffer());
             //compact the buffer, this is an optional method, wonder what would happen if we didn't
             netInBuffer.compact();

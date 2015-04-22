@@ -625,7 +625,11 @@ public final class OpenSslEngine extends SSLEngine {
             closeOutbound();
             closeInbound();
         }
-        return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), bytesConsumed, bytesProduced);
+        if (bytesProduced == 0 && bytesConsumed == 0) {
+            return new SSLEngineResult(BUFFER_UNDERFLOW, getHandshakeStatus(), bytesConsumed, bytesProduced);
+        } else {
+            return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), bytesConsumed, bytesProduced);
+        }
     }
 
     public SSLEngineResult unwrap(final ByteBuffer[] srcs, final ByteBuffer[] dsts) throws SSLException {
@@ -1156,6 +1160,7 @@ public final class OpenSslEngine extends SSLEngine {
 
     private void handshake() throws SSLException {
         int code = SSL.doHandshake(ssl);
+        SSLEngineResult.HandshakeStatus handshakeStatus = getHandshakeStatus();
         if (code <= 0) {
             // Check for OpenSSL errors caused by the handshake
             long error = SSL.getLastErrorNumber();
@@ -1167,10 +1172,13 @@ public final class OpenSslEngine extends SSLEngine {
             String s3 = org.apache.tomcat.jni.Error.strerror(i2);
             String s4 = SSL.getCipherForSSL(ssl);
             String s5 = SSL.getLastError();
-            logger.error(errorString);
-            logger.error(error2);
-            logger.error(s2);
-            logger.error(s3);
+            logger.error("code: " + code + " error: " + error + " OpenSsl.isError: " + OpenSsl.isError(error));
+            logger.error("errorString: " + errorString);
+            logger.error("error2: " + error2);
+            logger.error("s2: " + s2);
+            logger.error("s3: " + s3);
+            logger.error("s4: " + s4);
+            logger.error("s5: " + s5);
             if (OpenSsl.isError(error)) {
                 String err = SSL.getErrorString(error);
                 if (logger.isDebugEnabled()) {
