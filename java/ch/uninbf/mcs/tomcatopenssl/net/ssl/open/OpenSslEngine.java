@@ -20,8 +20,11 @@ import io.netty.handler.ssl.OpenSsl;
 //import io.netty.util.internal.EmptyArrays;
 //import io.netty.util.internal.PlatformDependent;
 
+
+
 import org.apache.tomcat.jni.Buffer;
 import org.apache.tomcat.jni.SSL;
+import org.apache.tomcat.jni.SSLContext;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -343,8 +346,7 @@ public final class OpenSslEngine extends SSLEngine {
     }
 
     @Override
-    public synchronized SSLEngineResult wrap(
-            final ByteBuffer[] srcs, final int offset, final int length, final ByteBuffer dst) throws SSLException {
+    public synchronized SSLEngineResult wrap(final ByteBuffer[] srcs, final int offset, final int length, final ByteBuffer dst) throws SSLException {
 
         // Check to make sure the engine has not been closed
         if (destroyed != 0) {
@@ -387,6 +389,7 @@ public final class OpenSslEngine extends SSLEngine {
 
         // Check for pending data in the network BIO
         pendingNet = SSL.pendingWrittenBytesInBIO(networkBIO);
+System.out.println("pendingNet: " + pendingNet);
         if (pendingNet > 0) {
             // Do we have enough room in dst to write encrypted data?
             int capacity = dst.remaining();
@@ -408,6 +411,7 @@ public final class OpenSslEngine extends SSLEngine {
                 shutdown();
             }
 
+System.out.println("pendingNet done: " + bytesProduced + " " + getHandshakeStatus());
             return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), 0, bytesProduced);
         }
 
@@ -449,39 +453,33 @@ public final class OpenSslEngine extends SSLEngine {
                 }
             }
         }
-
+System.out.println("wrap done: " + bytesConsumed + " " + bytesProduced);
         return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), bytesConsumed, bytesProduced);
     }
 
-    public synchronized SSLEngineResult unwrap(
-            final ByteBuffer[] srcs, int srcsOffset, final int srcsLength,
-            final ByteBuffer[] dsts, final int dstsOffset, final int dstsLength) throws SSLException {
+    @Override
+    public SSLEngineResult unwrap(final ByteBuffer src, final ByteBuffer[] dsts, final int offset, final int length) throws SSLException {
         // Check to make sure the engine has not been closed
         if (destroyed != 0) {
             return new SSLEngineResult(CLOSED, NOT_HANDSHAKING, 0, 0);
         }
 
         // Throw requried runtime exceptions
-        if (srcs == null) {
-            throw new NullPointerException("srcs");
-        }
-        if (srcsOffset >= srcs.length
-                || srcsOffset + srcsLength > srcs.length) {
-            throw new IndexOutOfBoundsException(
-                    "offset: " + srcsOffset + ", length: " + srcsLength
-                    + " (expected: offset <= offset + length <= srcs.length (" + srcs.length + "))");
+        if (src == null) {
+            throw new NullPointerException("src");
         }
         if (dsts == null) {
             throw new IllegalArgumentException("dsts is null");
         }
-        if (dstsOffset >= dsts.length || dstsOffset + dstsLength > dsts.length) {
+        if (offset >= dsts.length || offset + length > dsts.length) {
             throw new IndexOutOfBoundsException(
-                    "offset: " + dstsOffset + ", length: " + dstsLength
+                    "offset: " + offset + ", length: " + length
                     + " (expected: offset <= offset + length <= dsts.length (" + dsts.length + "))");
         }
+System.out.println("unwrap: " + src.remaining());
         int capacity = 0;
-        final int endOffset = dstsOffset + dstsLength;
-        for (int i = dstsOffset; i < endOffset; i++) {
+        final int endOffset = offset + length;
+        for (int i = offset; i < endOffset; i++) {
             ByteBuffer dst = dsts[i];
             if (dst == null) {
                 throw new IllegalArgumentException("dsts[" + i + "] is null");
@@ -504,15 +502,7 @@ public final class OpenSslEngine extends SSLEngine {
             return new SSLEngineResult(getEngineStatus(), NEED_WRAP, 0, 0);
         }
 
-        final int srcsEndOffset = srcsOffset + srcsLength;
-        int len = 0;
-        for (int i = srcsOffset; i < srcsEndOffset; i++) {
-            ByteBuffer src = srcs[i];
-            if (src == null) {
-                throw new IllegalArgumentException("srcs[" + i + "] is null");
-            }
-            len += src.remaining();
-        }
+        int len = src.remaining();
 
         // protect against protocol overflow attack vector
         if (len > MAX_ENCRYPTED_PACKET_LENGTH) {
@@ -526,44 +516,39 @@ public final class OpenSslEngine extends SSLEngine {
         // Write encrypted data to network BIO
         int bytesConsumed = -1;
         try {
-            while (srcsOffset < srcsEndOffset) {
-                ByteBuffer src = srcs[srcsOffset];
-                int remaining = src.remaining();
-                int written = writeEncryptedData(src);
-                if (written >= 0) {
-                    if (bytesConsumed == -1) {
-                        bytesConsumed = written;
-                    } else {
-                        bytesConsumed += written;
-                    }
-                    if (written == remaining) {
-                        srcsOffset++;
-                    } else if (written == 0) {
-                        break;
-                    }
+            int written = writeEncryptedData(src);
+            if (written >= 0) {
+                if (bytesConsumed == -1) {
+                    bytesConsumed = written;
                 } else {
-                    break;
+                    bytesConsumed += written;
                 }
             }
         } catch (Exception e) {
             throw new SSLException(e);
         }
         if (bytesConsumed >= 0) {
+System.out.println("getHandshakeStatus: " + getHandshakeStatus());
             int lastPrimingReadResult = SSL.readFromSSL(ssl, EMPTY_ADDR, 0); // priming read
+System.out.println("getHandshakeStatus2: " + getHandshakeStatus());
 
             // check if SSL_read returned <= 0. In this case we need to check the error and see if it was something
             // fatal.
+            // FIXME: Look how fatal this really is
             if (lastPrimingReadResult <= 0) {
                 // Check for OpenSSL errors caused by the priming read
                 long error = SSL.getLastErrorNumber();
                 if (OpenSsl.isError(error)) {
                     String err = SSL.getErrorString(error);
                     if (logger.isDebugEnabled()) {
-                        logger.debug(
-                                "SSL_read failed: primingReadResult: " + lastPrimingReadResult
+                        logger.debug(error + 
+                                "] SSL_read failed: primingReadResult: " + lastPrimingReadResult
                                 + "; OpenSSL error: '" + err + '\'');
                     }
-
+                    System.out.println(SSL.getVersion(ssl) + " Cipher: " + SSL.getCipherForSSL(ssl));
+                    for (String cipher: SSL.getCiphers(ssl)) {
+                        System.out.println("Avail cipher: " + cipher);
+                    }
                     // There was an internal error -- shutdown
                     shutdown();
                     throw new SSLException(err);
@@ -587,7 +572,7 @@ public final class OpenSslEngine extends SSLEngine {
             }
 
             // Write decrypted data to dsts buffers
-            int idx = dstsOffset;
+            int idx = offset;
             while (idx < endOffset) {
                 ByteBuffer dst = dsts[idx];
                 if (!dst.hasRemaining()) {
@@ -630,16 +615,6 @@ public final class OpenSslEngine extends SSLEngine {
         } else {
             return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), bytesConsumed, bytesProduced);
         }
-    }
-
-    public SSLEngineResult unwrap(final ByteBuffer[] srcs, final ByteBuffer[] dsts) throws SSLException {
-        return unwrap(srcs, 0, srcs.length, dsts, 0, dsts.length);
-    }
-
-    @Override
-    public SSLEngineResult unwrap(
-            final ByteBuffer src, final ByteBuffer[] dsts, final int offset, final int length) throws SSLException {
-        return unwrap(new ByteBuffer[]{src}, 0, 1, dsts, offset, length);
     }
 
     @Override
@@ -1160,7 +1135,6 @@ public final class OpenSslEngine extends SSLEngine {
 
     private void handshake() throws SSLException {
         int code = SSL.doHandshake(ssl);
-        SSLEngineResult.HandshakeStatus handshakeStatus = getHandshakeStatus();
         if (code <= 0) {
             // Check for OpenSSL errors caused by the handshake
             long error = SSL.getLastErrorNumber();

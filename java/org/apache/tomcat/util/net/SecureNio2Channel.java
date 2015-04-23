@@ -76,7 +76,6 @@ public class SecureNio2Channel extends Nio2Channel  {
         handshakeReadCompletionHandler = new CompletionHandler<Integer, SocketWrapper<Nio2Channel>>() {
             @Override
             public void completed(Integer result, SocketWrapper<Nio2Channel> attachment) {
-                System.out.println("Read HS: " + handshakeStatus + " result: " + result);
                 if (result.intValue() < 0) {
                     failed(new EOFException(), attachment);
                     return;
