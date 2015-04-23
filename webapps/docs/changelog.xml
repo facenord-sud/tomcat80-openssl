@@ -97,6 +97,10 @@
         <bug>57801</bug>: Improve the error message in the start script in case
         the PID read from the PID file is already owned by a process. (rjung)
       </fix>
+      <fix>
+        <bug>57841</bug>: Improve error logging during web application start.
+        (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">
@@ -126,6 +130,22 @@
         After some errors, the pending flags could remain set when using SSL
         NIO2. (remm)
       </fix>
+      <fix>
+        <bug>57833</bug>: When using JKS based keystores for NIO or NIO2, ensure
+        that the key alias is always converted to lower caes since that is what
+        JKS key stores expect. Based on a patch by  Santosh Giri Govind M.
+        (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Jasper">
+    <changelog>
+      <fix>
+        <bug>57845</bug>: Ensure that, if the same JSP is accessed directly and
+        via a <code>&lt;jsp-file&gt;</code> declaration in web.xml, updates to
+        the JSP are visible (subject to the normal rules on re-compilation)
+        regardless of how the JSP is accessed. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Cluster">
@@ -138,6 +158,10 @@
         Add new attribute that send all actions for session across Tomcat
         cluster nodes. (kfujino)
       </add>
+      <fix>
+        Remove unused <code>pathname</code> attribute in mbean definition of
+        <code>BackupManager</code>. (kfujino)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="WebSocket">
