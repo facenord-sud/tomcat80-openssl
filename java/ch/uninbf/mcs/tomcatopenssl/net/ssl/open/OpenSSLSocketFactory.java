@@ -288,7 +288,6 @@ public class OpenSSLSocketFactory implements SSLUtil, ServerSocketFactory {
 
     @Override
     public void configureSessionContext(SSLSessionContext sslSessionContext) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

@@ -389,7 +389,6 @@ public final class OpenSslEngine extends SSLEngine {
 
         // Check for pending data in the network BIO
         pendingNet = SSL.pendingWrittenBytesInBIO(networkBIO);
-System.out.println("pendingNet: " + pendingNet);
         if (pendingNet > 0) {
             // Do we have enough room in dst to write encrypted data?
             int capacity = dst.remaining();
@@ -411,7 +410,6 @@ System.out.println("pendingNet: " + pendingNet);
                 shutdown();
             }
 
-System.out.println("pendingNet done: " + bytesProduced + " " + getHandshakeStatus());
             return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), 0, bytesProduced);
         }
 
@@ -453,7 +451,6 @@ System.out.println("pendingNet done: " + bytesProduced + " " + getHandshakeStatu
                 }
             }
         }
-System.out.println("wrap done: " + bytesConsumed + " " + bytesProduced);
         return new SSLEngineResult(getEngineStatus(), getHandshakeStatus(), bytesConsumed, bytesProduced);
     }
 
@@ -476,7 +473,7 @@ System.out.println("wrap done: " + bytesConsumed + " " + bytesProduced);
                     "offset: " + offset + ", length: " + length
                     + " (expected: offset <= offset + length <= dsts.length (" + dsts.length + "))");
         }
-System.out.println("unwrap: " + src.remaining());
+
         int capacity = 0;
         final int endOffset = offset + length;
         for (int i = offset; i < endOffset; i++) {
@@ -528,9 +525,7 @@ System.out.println("unwrap: " + src.remaining());
             throw new SSLException(e);
         }
         if (bytesConsumed >= 0) {
-System.out.println("getHandshakeStatus: " + getHandshakeStatus());
             int lastPrimingReadResult = SSL.readFromSSL(ssl, EMPTY_ADDR, 0); // priming read
-System.out.println("getHandshakeStatus2: " + getHandshakeStatus());
 
             // check if SSL_read returned <= 0. In this case we need to check the error and see if it was something
             // fatal.

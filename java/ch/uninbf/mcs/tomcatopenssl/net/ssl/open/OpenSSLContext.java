@@ -5,23 +5,16 @@
  */
 package ch.uninbf.mcs.tomcatopenssl.net.ssl.open;
 
-import static ch.uninbf.mcs.tomcatopenssl.util.Utility.*;
 import io.netty.handler.ssl.CipherSuiteConverter;
 import io.netty.handler.ssl.OpenSsl;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyManagementException;
-import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -30,9 +23,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -47,7 +37,6 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.juli.logging.Log;
@@ -248,7 +237,6 @@ public class OpenSSLContext extends SslContext {
         try {
             certChainFile = chooseKeyManager(kms).getCertificateChain();
             keyFile = chooseKeyManager(kms).getPrivateKey();
-            checkNotNull(keyPassword);
             if (!SSLContext.setCertificate(ctx, certChainFile.getPath(), keyFile.getPath(), keyPassword, SSL.SSL_AIDX_RSA)) {
                 long error = SSL.getLastErrorNumber();
                 if (OpenSsl.isError(error)) {

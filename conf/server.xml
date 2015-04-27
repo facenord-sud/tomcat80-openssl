@@ -78,7 +78,7 @@
     -->
     <Connector port="8443" protocol="org.apache.coyote.http11.Http11Nio2Protocol"
                SSLEnabled="true" scheme="https" secure="true"
-               clientAuth="false"
+               clientAuth="false" keystorePass="password"
                truststoreFile="conf/localhost-cert.pem"
                keystoreFile="conf/localhost-key.pem"
                sslImplementationName="ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation" />

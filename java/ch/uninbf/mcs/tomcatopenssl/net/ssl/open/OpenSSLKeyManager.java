@@ -1,6 +1,5 @@
 package ch.uninbf.mcs.tomcatopenssl.net.ssl.open;
 
-import static ch.uninbf.mcs.tomcatopenssl.util.Utility.*;
 import java.io.File;
 import javax.net.ssl.KeyManager;
 
@@ -19,9 +18,12 @@ public class OpenSSLKeyManager implements KeyManager{
     public void setPrivateKey(File privateKey) { this.privateKey = privateKey; }
     
     OpenSSLKeyManager(String certChainFile, String keyFile) {
-        // TODO: throw exception when null
-        checkNotNull(certChainFile);
-        checkNotNull(keyFile);
+        if (certChainFile == null) {
+            throw new IllegalArgumentException("Null certChainFile");
+        }
+        if (keyFile == null) {
+            throw new IllegalArgumentException("Null keyFile");
+        }
         this.certificateChain = new File(certChainFile);
         this.privateKey = new File(keyFile);
     }

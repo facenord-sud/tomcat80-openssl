@@ -18,13 +18,11 @@ import org.apache.tomcat.util.net.SSLSupport;
  */
 public class OpenSSLSupport implements SSLSupport, SSLSessionManager {
     
-    private OpenSSLSession session;
+    private SSLSession session;
     private Socket sock;
 
-    public OpenSSLSession getSession() { return session; }
-    
     public OpenSSLSupport(SSLSession session) {
-        this.session = (OpenSSLSession) session;
+        this.session = session;
     }
     
     public OpenSSLSupport(Socket sock) {
@@ -63,7 +61,7 @@ public class OpenSSLSupport implements SSLSupport, SSLSessionManager {
 
     @Override
     public void invalidateSession() {
-        getSession().invalidate();
+        session.invalidate();
     }
 
     @Override
