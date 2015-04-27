@@ -43,8 +43,6 @@ public class SecureNio2Channel extends Nio2Channel  {
 
     protected static final StringManager sm = StringManager.getManager("org.apache.tomcat.util.net.res");
 
-    protected static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);
-
     protected ByteBuffer netInBuffer;
     protected ByteBuffer netOutBuffer;
 
@@ -78,7 +76,6 @@ public class SecureNio2Channel extends Nio2Channel  {
         handshakeReadCompletionHandler = new CompletionHandler<Integer, SocketWrapper<Nio2Channel>>() {
             @Override
             public void completed(Integer result, SocketWrapper<Nio2Channel> attachment) {
-System.out.println("Read: " + result);
                 if (result.intValue() < 0) {
                     failed(new EOFException(), attachment);
                     return;
@@ -93,7 +90,6 @@ System.out.println("Read: " + result);
         handshakeWriteCompletionHandler = new CompletionHandler<Integer, SocketWrapper<Nio2Channel>>() {
             @Override
             public void completed(Integer result, SocketWrapper<Nio2Channel> attachment) {
-System.out.println("Write: " + result);
                 if (result.intValue() < 0) {
                     failed(new EOFException(), attachment);
                     return;
@@ -215,7 +211,6 @@ System.out.println("Write: " + result);
         SSLEngineResult handshake = null;
 
         while (!handshakeComplete) {
-System.out.println("handshakeStatus: " + handshakeStatus);
             switch (handshakeStatus) {
                 case NOT_HANDSHAKING: {
                     //should never happen
@@ -242,16 +237,7 @@ System.out.println("handshakeStatus: " + handshakeStatus);
                 }
                 case NEED_WRAP: {
                     //perform the wrap function
-                    //this should never be called with a network buffer that contains data
-                    //so we can clear it here.
-                    netOutBuffer.clear();
-                    //perform the wrap
-                    handshake = sslEngine.wrap(bufHandler.getWriteBuffer(), netOutBuffer);
-                    //prepare the results to be written
-                    netOutBuffer.flip();
-                    //set the status
-                    handshakeStatus = handshake.getHandshakeStatus();
-System.out.println("NEED_WRAP handshakeStatus: " + handshakeStatus + " " + netOutBuffer.remaining());
+                    handshake = handshakeWrap();
                     if (handshake.getStatus() == Status.OK){
                         if (handshakeStatus == HandshakeStatus.NEED_TASK)
                             handshakeStatus = tasks();
@@ -278,31 +264,7 @@ System.out.println("NEED_WRAP handshakeStatus: " + handshakeStatus + " " + netOu
                 //$FALL-THROUGH$
                 case NEED_UNWRAP: {
                     //perform the unwrap function
-                    if (netInBuffer.position() == netInBuffer.limit()) {
-                        //clear the buffer if we have emptied it out on data
-                        netInBuffer.clear();
-                    }
-                    boolean cont = false;
-                    //loop while we can perform pure SSLEngine data
-                    do {
-                        //prepare the buffer with the incoming data
-                        netInBuffer.flip();
-                        //call unwrap
-                        handshake = sslEngine.unwrap(netInBuffer, bufHandler.getReadBuffer());
-                        //compact the buffer, this is an optional method, wonder what would happen if we didn't
-                        netInBuffer.compact();
-                        //read in the status
-                        handshakeStatus = handshake.getHandshakeStatus();
-System.out.println("NEED_UNWRAP handshakeStatus: " + handshakeStatus);
-                        if (handshake.getStatus() == SSLEngineResult.Status.OK &&
-                                handshakeStatus == HandshakeStatus.NEED_TASK) {
-                            //execute tasks if we need to
-                            handshakeStatus = tasks();
-                        }
-                        //perform another unwrap?
-                        cont = handshake.getStatus() == SSLEngineResult.Status.OK &&
-                               handshakeStatus == HandshakeStatus.NEED_UNWRAP;
-                    } while (cont);
+                    handshake = handshakeUnwrap();
                     if (handshake.getStatus() == Status.OK) {
                         if (handshakeStatus == HandshakeStatus.NEED_TASK)
                             handshakeStatus = tasks();
@@ -390,8 +352,60 @@ System.out.println("NEED_UNWRAP handshakeStatus: " + handshakeStatus);
         while ( (r = sslEngine.getDelegatedTask()) != null) {
             r.run();
         }
-System.out.println("TASKS handshakeStatus: " + sslEngine.getHandshakeStatus());
         return sslEngine.getHandshakeStatus();
+    }
+
+    /**
+     * Performs the WRAP function
+     * @return SSLEngineResult
+     * @throws IOException
+     */
+    protected SSLEngineResult handshakeWrap() throws IOException {
+        //this should never be called with a network buffer that contains data
+        //so we can clear it here.
+        netOutBuffer.clear();
+        //perform the wrap
+        SSLEngineResult result = sslEngine.wrap(bufHandler.getWriteBuffer(), netOutBuffer);
+        //prepare the results to be written
+        netOutBuffer.flip();
+        //set the status
+        handshakeStatus = result.getHandshakeStatus();
+        return result;
+    }
+
+    /**
+     * Perform handshake unwrap
+     * @return SSLEngineResult
+     * @throws IOException
+     */
+    protected SSLEngineResult handshakeUnwrap() throws IOException {
+
+        if (netInBuffer.position() == netInBuffer.limit()) {
+            //clear the buffer if we have emptied it out on data
+            netInBuffer.clear();
+        }
+        SSLEngineResult result;
+        boolean cont = false;
+        //loop while we can perform pure SSLEngine data
+        do {
+            //prepare the buffer with the incoming data
+            netInBuffer.flip();
+            //call unwrap
+            result = sslEngine.unwrap(netInBuffer, bufHandler.getReadBuffer());
+            //compact the buffer, this is an optional method, wonder what would happen if we didn't
+            netInBuffer.compact();
+            //read in the status
+            handshakeStatus = result.getHandshakeStatus();
+            if (result.getStatus() == SSLEngineResult.Status.OK &&
+                 result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+                //execute tasks if we need to
+                handshakeStatus = tasks();
+            }
+            //perform another unwrap?
+            cont = result.getStatus() == SSLEngineResult.Status.OK &&
+                   handshakeStatus == HandshakeStatus.NEED_UNWRAP;
+        } while (cont);
+        return result;
     }
 
     /**

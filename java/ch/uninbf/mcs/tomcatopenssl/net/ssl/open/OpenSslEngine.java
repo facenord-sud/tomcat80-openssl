@@ -299,6 +299,7 @@ public final class OpenSslEngine extends SSLEngine {
 
                 final int sslRead = SSL.readFromSSL(ssl, addr, len);
                 if (sslRead > 0) {
+                    buf.limit(sslRead);
                     dst.limit(pos + sslRead);
                     dst.put(buf);
                     dst.limit(limit);
@@ -526,10 +527,8 @@ public final class OpenSslEngine extends SSLEngine {
         }
         if (bytesConsumed >= 0) {
             int lastPrimingReadResult = SSL.readFromSSL(ssl, EMPTY_ADDR, 0); // priming read
-
             // check if SSL_read returned <= 0. In this case we need to check the error and see if it was something
             // fatal.
-            // FIXME: Look how fatal this really is
             if (lastPrimingReadResult <= 0) {
                 // Check for OpenSSL errors caused by the priming read
                 long error = SSL.getLastErrorNumber();
@@ -539,10 +538,6 @@ public final class OpenSslEngine extends SSLEngine {
                         logger.debug(error + 
                                 "] SSL_read failed: primingReadResult: " + lastPrimingReadResult
                                 + "; OpenSSL error: '" + err + '\'');
-                    }
-                    System.out.println(SSL.getVersion(ssl) + " Cipher: " + SSL.getCipherForSSL(ssl));
-                    for (String cipher: SSL.getCiphers(ssl)) {
-                        System.out.println("Avail cipher: " + cipher);
                     }
                     // There was an internal error -- shutdown
                     shutdown();
@@ -1133,28 +1128,12 @@ public final class OpenSslEngine extends SSLEngine {
         if (code <= 0) {
             // Check for OpenSSL errors caused by the handshake
             long error = SSL.getLastErrorNumber();
-            int error2 = SSL.getError(ssl, code);
-            String errorString = SSL.getErrorString(error2);
-            int i1 = org.apache.tomcat.jni.Error.netosError();
-            int i2 = org.apache.tomcat.jni.Error.osError();
-            String s2 = org.apache.tomcat.jni.Error.strerror(i1);
-            String s3 = org.apache.tomcat.jni.Error.strerror(i2);
-            String s4 = SSL.getCipherForSSL(ssl);
-            String s5 = SSL.getLastError();
-            logger.error("code: " + code + " error: " + error + " OpenSsl.isError: " + OpenSsl.isError(error));
-            logger.error("errorString: " + errorString);
-            logger.error("error2: " + error2);
-            logger.error("s2: " + s2);
-            logger.error("s3: " + s3);
-            logger.error("s4: " + s4);
-            logger.error("s5: " + s5);
             if (OpenSsl.isError(error)) {
                 String err = SSL.getErrorString(error);
                 if (logger.isDebugEnabled()) {
                     logger.debug(
                             "SSL_do_handshake failed: OpenSSL error: '" + err + '\'');
                 }
-
                 // There was an internal error -- shutdown
                 shutdown();
                 throw new SSLException(err);
