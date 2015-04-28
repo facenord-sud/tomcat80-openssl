@@ -467,6 +467,15 @@ public class TestMethodExpressionImpl {
 
 
     @Test
+    public void testBug53792d() {
+        MethodExpression me = factory.createMethodExpression(context,
+                "#{beanB.sayHello().length()}", null, new Class<?>[] {});
+        Integer result = (Integer) me.invoke(context, new Object[] { "foo" });
+        assertEquals(beanB.sayHello().length(), result.intValue());
+    }
+
+
+    @Test
     public void testBug56797a() {
         MethodExpression me = factory.createMethodExpression(context,
                 "${beanAA.echo1('Hello World!')}", null , null);
@@ -498,4 +507,28 @@ public class TestMethodExpressionImpl {
                 "${beanAA.echo2}", null , new Class[]{String.class});
         me.invoke(context, null);
     }
+
+    @Test
+    public void testBug57855c() {
+        MethodExpression me = factory.createMethodExpression(context,
+                "${beanB.echo}", null , new Class[]{String.class});
+        me.invoke(context, null);
+    }
+
+
+    @Test
+    public void testBug57855d() {
+        MethodExpression me = factory.createMethodExpression(context,
+                "${beanB.echo}", null , new Class[]{String.class});
+        Object r = me.invoke(context, new String[] { "aaa" });
+        assertEquals("aaa", r.toString());
+    }
+    @Test
+    public void testBug57855e() {
+        MethodExpression me = factory.createMethodExpression(context,
+                "${beanB.echo}", null , new Class[]{String.class});
+        Object r = me.invoke(context, new String[] { "aaa", "bbb" });
+        assertEquals("aaa, bbb", r.toString());
+    }
+
 }
