@@ -82,8 +82,7 @@ final class PemReader {
     }
 
     private static ByteBuffer decodeBase64(String decoding) {
-        ByteBuffer base64 = ByteBuffer.wrap(decoding.getBytes(Charset.forName("US-ASCII")));
-        return java.util.Base64.getDecoder().decode(base64);
+        return ByteBuffer.wrap(Base64.decodeBase64(decoding.getBytes(Charset.forName("US-ASCII"))));
     }
 
     static byte[] readPrivateKey(File file) throws KeyException {
