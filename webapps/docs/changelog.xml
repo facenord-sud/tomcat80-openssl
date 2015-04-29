@@ -64,6 +64,11 @@
         pattern <code>%{remote}p</code>. (rjung)
       </add>
       <fix>
+        <bug>57556</bug>: Refine the previous fix fo rthis issue so that the
+        real path returned only has a trialing separator if the requested path
+        ended with <code>/</code>. (markt)
+      </fix>
+      <fix>
         <bug>57765</bug>: When checking last modified times as part of the
         automatic deployment process, account for the fact that
         <code>File.lastModified()</code> has a resolution of one second to
@@ -105,6 +110,11 @@
         <bug>57856</bug>: Ensure that any scheme/port changes implemented by the
         <code>RemoteIpFilter</code> also affect
         <code>HttpServletResponse.sendRedirect()</code>. (markt)
+      </fix>
+      <fix>
+        <bug>57863</bug>: Fix the RewriteMap support in RewriteValve that did
+        not use the correct key value to look up entries. Based on a patch
+        provided by Tatsuya Bessho. (markt)
       </fix>
     </changelog>
   </subsection>
@@ -217,6 +227,11 @@
         it clear that the order keys are read from the keystore is
         implementation dependent. (markt)
       </add>
+      <fix>
+        <bug>57864</bug>: Update the documentation web application to make it
+        clearer that hex values are not valid for cluster send options. Based on
+        a patch by Kyohei Nakamura. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Tribes">
@@ -237,6 +252,10 @@
       <update>
         Update optional Checkstyle library to 6.5. (kkolinko)
       </update>
+      <fix>
+        <bug>57707</bug>: Improve error message when trying to run a release
+        build on a non-Windows platform and Wine is not available. (markt)
+      </fix>
     </changelog>
   </subsection>
 </section>
