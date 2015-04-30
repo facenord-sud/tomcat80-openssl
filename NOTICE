@@ -4,6 +4,9 @@ Copyright 1999-2015 The Apache Software Foundation
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
 
+This product includes software developed at
+The Netty Project (http://netty.io/).
+
 The Windows Installer is built with the Nullsoft
 Scriptable Install System (NSIS), which is
 open source software.  The original software and
@@ -21,6 +24,10 @@ The org.apache.cometd.bayeux API is derivative work originating at the Dojo Foun
 * Copyright 2007-2008 Filip Hanik
 * Copyright 2007 Dojo Foundation
 * Copyright 2007 Mort Bay Consulting Pty. Ltd.
+
+For portions of the Tomcat JNI OpenSSL API and the OpenSSL JSSE integration
+The org.apache.tomcat.jni, the io.netty, and the ch.uninbf packages are derivative work originating at the Netty project
+* Copyright 2014 The Netty Project
 
 The original XML Schemas for Java EE Deployment Descriptors:
  - javaee_5.xsd
