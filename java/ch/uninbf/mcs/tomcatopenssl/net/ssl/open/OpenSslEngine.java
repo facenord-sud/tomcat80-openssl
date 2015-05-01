@@ -24,7 +24,6 @@ import io.netty.handler.ssl.OpenSsl;
 
 import org.apache.tomcat.jni.Buffer;
 import org.apache.tomcat.jni.SSL;
-import org.apache.tomcat.jni.SSLContext;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -43,7 +42,6 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
