@@ -46,7 +46,7 @@ public class OpenSSLSocketFactory implements SSLUtil, ServerSocketFactory {
     public OpenSSLSocketFactory(AbstractEndpoint<?> endPoint) {
         this.endpoint = endPoint;
         try { 
-            OpenSSLContext context = (OpenSSLContext) SslContext.getInstance(CONTEXT_NAME, endpoint.getSslProtocol());
+            this.context = (OpenSSLContext) SslContext.getInstance(CONTEXT_NAME, endpoint.getSslProtocol());
             this.enabledProtocols = OpenSSLProtocols.getProtocols(context.getEnabledProtocol());
             List<String> requestedCiphers = null;
             String requestedCiphersStr = endpoint.getCiphers();
