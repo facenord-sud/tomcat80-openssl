@@ -23,6 +23,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSessionContext;
@@ -54,7 +55,7 @@ public abstract class SslContext {
     }
 
     public abstract void init(KeyManager[] kms, TrustManager[] tms,
-            SecureRandom sr) throws KeyManagementException;
+            SecureRandom sr) throws SSLException;
 
     public abstract SSLSessionContext getServerSessionContext();
 

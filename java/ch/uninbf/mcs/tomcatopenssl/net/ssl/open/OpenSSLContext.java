@@ -58,7 +58,7 @@ public class OpenSSLContext extends SslContext {
 
     private static final List<String> DEFAULT_CIPHERS;
     private static final List<String> AVAILABLE_PROTOCOLS = new ArrayList<>();
-    
+
     private OpenSslServerSessionContext sessionContext;
 
     private List<String> ciphers = new ArrayList<>();
@@ -187,30 +187,20 @@ public class OpenSSLContext extends SslContext {
     }
 
     @Override
-    public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws KeyManagementException {
+    public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws SSLException {
         synchronized (OpenSSLContext.class) {
-            try {
-                init();
-                // From the class of io.netty.handler.ssl.OpenSslServerContext:157-245
-                // OpenSSL requires certificates in PEM formats, but the verfication of the certificate
-                // is done with KeyManagers and TrustManagers of Java
-                // TODO-done: determine how to implemenet -> probably like netty
-                // TODO-done: implement a similar way
-                 /* Load the certificate file and private key. */
-                if(kms != null) {
-                    init(kms);
-                }
-                if(tms != null) {
-                    init(tms);
-                }
-                sessionContext = new OpenSslServerSessionContext(ctx);
-            } catch (SSLException ex) {
-                //TODO: catch exception
+            init();
+            if (kms != null) {
+                init(kms);
             }
+            if (tms != null) {
+                init(tms);
+            }
+            sessionContext = new OpenSslServerSessionContext(ctx);
         }
     }
-    
-    private void init(TrustManager[] tms) {
+
+    private void init(TrustManager[] tms) throws SSLException{
         try {
 
             final X509TrustManager manager = chooseTrustManager(tms);
@@ -228,6 +218,8 @@ public class OpenSSLContext extends SslContext {
                 }
             });
         } catch (Exception e) {
+            logger.debug("Failed to initialize the OpenSSLContext. Unable to initialize properly the TrustManager");
+            throw new SSLException("Unable to initialize the TrustManager", e);
         }
     }
 
@@ -245,8 +237,6 @@ public class OpenSSLContext extends SslContext {
                             + certChainFile + " and " + keyFile + " (" + err + ')');
                 }
             }
-        } catch (SSLException e) {
-            throw e;
         } catch (Exception e) {
             throw new SSLException("failed to set certificate: " + certChainFile + " and " + keyFile, e);
         }
@@ -256,8 +246,6 @@ public class OpenSSLContext extends SslContext {
         determineCiphers(requestedCiphers);
         try {
             SSLContext.setCipherSuite(ctx, CipherSuiteConverter.toOpenSsl(this.ciphers));
-        } catch (SSLException e) {
-            throw e;
         } catch (Exception e) {
             throw new SSLException("failed to set cipher suite: " + this.ciphers, e);
         }
@@ -284,7 +272,7 @@ public class OpenSSLContext extends SslContext {
             SSLContext.setSessionCacheTimeout(ctx, sessionTimeout);
         }
     }
-    
+
     static OpenSSLKeyManager chooseKeyManager(KeyManager[] managers) throws Exception {
         for (KeyManager manager : managers) {
             if (manager instanceof OpenSSLKeyManager) {
@@ -319,7 +307,7 @@ public class OpenSSLContext extends SslContext {
 
     @Override
     public SSLEngine createSSLEngine() {
-         return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
+        return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
     }
 
     @Override

@@ -20,6 +20,9 @@ package org.apache.tomcat.util.net.jsse;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -27,16 +30,24 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.net.SslContext;
 
 public class JSSESslContext extends SslContext {
 
     private SSLContext context;
+    private static final Log logger = LogFactory.getLog(JSSESslContext.class);
 
     @Override
     public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr)
-            throws KeyManagementException {
-        context.init(kms, tms, sr);
+            throws SSLException {
+        try {
+            context.init(kms, tms, sr);
+        } catch (KeyManagementException e) {
+           throw new SSLException("Failed to initialize the JSSESslContext. A problem with the key manager occured.", e);
+        }
     }
 
     @Override
