@@ -16,9 +16,6 @@
 
 package io.netty.handler.ssl;
 
-import io.netty.util.internal.NativeLibraryLoader;
-
-import org.apache.tomcat.jni.Library;
 import org.apache.tomcat.jni.Pool;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SSLContext;
@@ -26,10 +23,10 @@ import org.apache.tomcat.jni.SSLContext;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.apache.catalina.core.AprLifecycleListener;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.net.SslContext;
 
 /**
  * Tells if <a href="http://netty.io/wiki/forked-tomcat-native.html">{@code netty-tcnative}</a> and its OpenSSL support
@@ -53,21 +50,11 @@ public final class OpenSsl {
             logger.debug(
                     "netty-tcnative not in the classpath; OpenSSLEngine will be unavailable.");
         }
-
-        // If in the classpath, try to load the native library and initialize netty-tcnative.
-        // NOTE: Rely on the AprLifecycleListener to load the native library
-        /*if (cause == null) {
-            try {
-                NativeLibraryLoader.load("libtcnative-1", SSL.class.getClassLoader());
-                Library.initialize("provided");
-                SSL.initialize(null);
-            } catch (Throwable t) {
-                cause = t;
-                logger.error(
-                        "Failed to load netty-tcnative; OpenSSLEngine will be unavailable. ", t);
-            }
-        }*/
-
+        
+        if(!AprLifecycleListener.isAprAvailable()) {
+            cause = new UnsatisfiedLinkError("APR failed to initialize OpenSSL. Check the logs");
+        }
+        
         UNAVAILABILITY_CAUSE = cause;
 
         if (cause == null) {
