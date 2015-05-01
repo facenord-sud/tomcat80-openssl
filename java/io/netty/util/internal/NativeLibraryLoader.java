@@ -15,7 +15,6 @@
  */
 package io.netty.util.internal;
 
-import ch.uninbf.mcs.tomcatopenssl.util.ClassScope;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,9 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Locale;
-import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
