@@ -5,10 +5,6 @@
  */
 package ch.uninbf.mcs.tomcatopenssl.net.ssl.open;
 
-import static org.apache.tomcat.util.net.jsse.JSSESocketFactory.DEFAULT_KEY_PASS;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;

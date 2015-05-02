@@ -659,6 +659,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                         valueList.toString());
             }
         }
+        connection.setRequestProperty("Accept-Language", "en-US,en");
         connection.connect();
         int rc = connection.getResponseCode();
         if (resHead != null) {
