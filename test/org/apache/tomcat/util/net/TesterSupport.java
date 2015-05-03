@@ -16,6 +16,7 @@
  */
 package org.apache.tomcat.util.net;
 
+import ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -59,16 +60,27 @@ public final class TesterSupport {
         if (protocol.indexOf("Apr") == -1) {
             Connector connector = tomcat.getConnector();
             connector.setProperty("sslProtocol", "tls");
-            File keystoreFile =
-                new File("test/org/apache/tomcat/util/net/" + keystore);
-            connector.setAttribute("keystoreFile",
-                    keystoreFile.getAbsolutePath());
-            File truststoreFile = new File(
-                    "test/org/apache/tomcat/util/net/ca.jks");
-            connector.setAttribute("truststoreFile",
-                    truststoreFile.getAbsolutePath());
-            if (keystorePass != null) {
-                connector.setAttribute("keystorePass", keystorePass);
+            if(System.getProperty("tomcat.test.sslImplementation")
+                    .equals(OpenSSLImplementation.IMPLEMENTATION_NAME)) {
+                File pemstoreFile = new File(
+                    "../../test/org/apache/tomcat/util/net/localhost-cert.pem");
+                connector.setAttribute("truststoreFile", pemstoreFile);
+                pemstoreFile = new File("../../test/org/apache/tomcat/util/net/localhost-key.pem");
+                connector.setAttribute("keystoreFile", pemstoreFile);
+                connector.setAttribute("sslImplementationName", OpenSSLImplementation.IMPLEMENTATION_NAME);
+                connector.setAttribute("scheme", "https");
+            } else {
+                File keystoreFile =
+                    new File("test/org/apache/tomcat/util/net/" + keystore);
+                connector.setAttribute("keystoreFile",
+                        keystoreFile.getAbsolutePath());
+                File truststoreFile = new File(
+                        "test/org/apache/tomcat/util/net/ca.jks");
+                connector.setAttribute("truststoreFile",
+                        truststoreFile.getAbsolutePath());
+                if (keystorePass != null) {
+                    connector.setAttribute("keystorePass", keystorePass);
+                }
             }
             if (keyPass != null) {
                 connector.setAttribute("keyPass", keyPass);

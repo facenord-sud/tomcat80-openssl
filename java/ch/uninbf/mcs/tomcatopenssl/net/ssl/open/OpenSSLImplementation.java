@@ -17,7 +17,9 @@ import org.apache.tomcat.util.net.ServerSocketFactory;
  *
  * @author leo
  */
-public class OpenSSLImplementation extends SSLImplementation{
+public class OpenSSLImplementation extends SSLImplementation {
+
+    public static final String IMPLEMENTATION_NAME = "ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation";
 
     @Override
     public String getImplementationName() {
@@ -44,5 +46,4 @@ public class OpenSSLImplementation extends SSLImplementation{
         return new OpenSSLSocketFactory(ep);
     }
 
-    
 }

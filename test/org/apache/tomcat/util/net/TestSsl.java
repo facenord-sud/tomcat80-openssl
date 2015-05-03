@@ -55,7 +55,7 @@ public class TestSsl extends TomcatBaseTest {
         TesterSupport.configureClientSsl();
 
         Tomcat tomcat = getTomcatInstance();
-
+        
         File appDir = new File(getBuildDirectory(), "webapps/examples");
         org.apache.catalina.Context ctxt  = tomcat.addWebapp(
                 null, "/examples", appDir.getAbsolutePath());

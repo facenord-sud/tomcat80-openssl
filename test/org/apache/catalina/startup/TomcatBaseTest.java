@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.startup;
 
+import ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -154,7 +155,8 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         tomcat.setConnector(connector);
 
         // Add AprLifecycleListener if we are using the Apr connector
-        if (protocol.contains("Apr")) {
+        if (protocol.contains("Apr") || 
+                System.getProperty("tomcat.test.sslImplementation").equals(OpenSSLImplementation.IMPLEMENTATION_NAME)) {
             StandardServer server = (StandardServer) tomcat.getServer();
             AprLifecycleListener listener = new AprLifecycleListener();
             listener.setSSLRandomSeed("/dev/urandom");
