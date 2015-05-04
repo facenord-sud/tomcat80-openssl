@@ -23,6 +23,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -58,7 +59,7 @@ public class OpenSSLContext extends SslContext {
 
     private static final List<String> DEFAULT_CIPHERS;
     private static final List<String> AVAILABLE_PROTOCOLS = new ArrayList<>();
-    
+
     private OpenSslServerSessionContext sessionContext;
 
     private List<String> ciphers = new ArrayList<>();
@@ -112,6 +113,10 @@ public class OpenSSLContext extends SslContext {
     private final long aprPool;
     protected final long ctx;
     private static final Log logger = LogFactory.getLog(OpenSSLContext.class);
+     @SuppressWarnings("unused")
+    private volatile int aprPoolDestroyed;
+    private static final AtomicIntegerFieldUpdater<OpenSSLContext> DESTROY_UPDATER 
+            = AtomicIntegerFieldUpdater.newUpdater(OpenSSLContext.class, "aprPoolDestroyed");
     static final CertificateFactory X509_CERT_FACTORY;
 
     static {
@@ -144,7 +149,7 @@ public class OpenSSLContext extends SslContext {
     public OpenSSLContext() throws SSLException {
         OpenSsl.ensureAvailability();
         aprPool = Pool.create(0);
-
+        boolean success = false;
         try {
             synchronized (OpenSSLContext.class) {
                 try {
@@ -160,12 +165,19 @@ public class OpenSSLContext extends SslContext {
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_ECDH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_DH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+                success = true;
             }
-//            success = true;
         } finally {
-//            if (!success) {
-//                destroyPools();
-//            }
+            if (!success) {
+                destroyPools();
+            }
+        }
+    }
+
+    private void destroyPools() {
+        // Guard against multiple destroyPools() calls triggered by construction exception and finalize() later
+        if (aprPool != 0 && DESTROY_UPDATER.compareAndSet(this, 0, 1)) {
+            Pool.destroy(aprPool);
         }
     }
 
@@ -186,31 +198,42 @@ public class OpenSSLContext extends SslContext {
         }
     }
 
+    /**
+     * Setup the SSL_CTX
+     *
+     * @param kms Must contain a KeyManager of the type
+     * {@code OpenSSLKeyManager}
+     * @param tms
+     * @param sr Is not used for this implementation.
+     * @throws SSLException
+     */
     @Override
-    public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws KeyManagementException {
+    public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws SSLException {
+        try {
         synchronized (OpenSSLContext.class) {
-            try {
-                init();
-                // From the class of io.netty.handler.ssl.OpenSslServerContext:157-245
-                // OpenSSL requires certificates in PEM formats, but the verfication of the certificate
-                // is done with KeyManagers and TrustManagers of Java
-                // TODO-done: determine how to implemenet -> probably like netty
-                // TODO-done: implement a similar way
-                 /* Load the certificate file and private key. */
-                if(kms != null) {
-                    init(kms);
-                }
-                if(tms != null) {
-                    init(tms);
-                }
-                sessionContext = new OpenSslServerSessionContext(ctx);
-            } catch (SSLException ex) {
-                //TODO: catch exception
+            init();
+            if (kms != null) {
+                init(kms);
             }
+            if (tms != null) {
+                init(tms);
+            }
+            sessionContext = new OpenSslServerSessionContext(ctx);
+        }
+        } catch(SSLException e) {
+            destroyPools();
+            throw new SSLException(e);
         }
     }
-    
-    private void init(TrustManager[] tms) {
+
+    /**
+     * Setup the SSL_CTX for the client verification.
+     *
+     * @todo Change this code. It is not accurate anymore.
+     * @param tms
+     * @throws SSLException
+     */
+    private void init(TrustManager[] tms) throws SSLException {
         try {
 
             final X509TrustManager manager = chooseTrustManager(tms);
@@ -228,15 +251,24 @@ public class OpenSSLContext extends SslContext {
                 }
             });
         } catch (Exception e) {
+            logger.debug("Failed to initialize the OpenSSLContext. Unable to initialize properly the TrustManager");
+            throw new SSLException("Unable to initialize the TrustManager", e);
         }
     }
 
+    /**
+     * Set the certificate and key to the SSL_CTX
+     *
+     * @param kms
+     * @throws SSLException
+     */
     private void init(KeyManager[] kms) throws SSLException {
         File certChainFile = null;
         File keyFile = null;
         try {
-            certChainFile = chooseKeyManager(kms).getCertificateChain();
-            keyFile = chooseKeyManager(kms).getPrivateKey();
+            OpenSSLKeyManager openSSLKeyManager = chooseKeyManager(kms);
+            certChainFile = openSSLKeyManager.getCertificateChain();
+            keyFile = openSSLKeyManager.getPrivateKey();
             if (!SSLContext.setCertificate(ctx, certChainFile.getPath(), keyFile.getPath(), keyPassword, SSL.SSL_AIDX_RSA)) {
                 long error = SSL.getLastErrorNumber();
                 if (OpenSsl.isError(error)) {
@@ -245,19 +277,20 @@ public class OpenSSLContext extends SslContext {
                             + certChainFile + " and " + keyFile + " (" + err + ')');
                 }
             }
-        } catch (SSLException e) {
-            throw e;
         } catch (Exception e) {
             throw new SSLException("failed to set certificate: " + certChainFile + " and " + keyFile, e);
         }
     }
 
+    /**
+     * Setup the SSL_CTX. It setup the basis like the cipher suites, etc.
+     *
+     * @throws SSLException
+     */
     private void init() throws SSLException {
         determineCiphers(requestedCiphers);
         try {
             SSLContext.setCipherSuite(ctx, CipherSuiteConverter.toOpenSsl(this.ciphers));
-        } catch (SSLException e) {
-            throw e;
         } catch (Exception e) {
             throw new SSLException("failed to set cipher suite: " + this.ciphers, e);
         }
@@ -284,7 +317,7 @@ public class OpenSSLContext extends SslContext {
             SSLContext.setSessionCacheTimeout(ctx, sessionTimeout);
         }
     }
-    
+
     static OpenSSLKeyManager chooseKeyManager(KeyManager[] managers) throws Exception {
         for (KeyManager manager : managers) {
             if (manager instanceof OpenSSLKeyManager) {
@@ -319,7 +352,7 @@ public class OpenSSLContext extends SslContext {
 
     @Override
     public SSLEngine createSSLEngine() {
-         return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
+        return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
     }
 
     @Override

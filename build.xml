@@ -1376,7 +1376,14 @@
   <target name="test-nio2" description="Runs the JUnit test cases for NIO2. Does not stop on errors."
           depends="test-compile,deploy,cobertura-instrument,test-openssl-exists" if="${execute.test.nio2}">
     <runtests protocol="org.apache.coyote.http11.Http11Nio2Protocol"
-              extension=".NIO2" />
+              extension=".NIO2"/>
+  </target>
+  <target name="test-nio2-openssl" description="Test the openssl implementation in Nio2"
+          depends="test-compile,deploy,cobertura-instrument,test-openssl-exists,test-apr-exists">
+      <property name="test.entry" value="org.apache.tomcat.util.net.TestSsl"/>
+          <runtests protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+              extension=".OpenSSL.NIO2"
+              sslImplementation="ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation"/>
   </target>
 
   <target name="test-apr" description="Runs the JUnit test cases for APR. Does not stop on errors."
@@ -1414,6 +1421,8 @@
                description="The class name for the connector protocol"/>
     <attribute name="extension"
                description="The extension to use to distinguish the output"/>
+    <attribute name="sslImplementation"
+                description="The SSL implementation to use for the nio2 connector"/>
 
     <sequential>
       <mkdir dir="${test.reports}" />
@@ -1432,6 +1441,7 @@
 
         <sysproperty key="tomcat.test.temp" value="${test.temp}" />
         <sysproperty key="tomcat.test.tomcatbuild" value="${tomcat.build}" />
+        <sysproperty key="tomcat.test.sslImplementation" value="@{sslImplementation}"/>
         <sysproperty key="tomcat.test.protocol" value="@{protocol}" />
         <sysproperty key="tomcat.test.accesslog" value="${test.accesslog}" />
         <sysproperty key="tomcat.test.reports" value="${test.reports}" />
