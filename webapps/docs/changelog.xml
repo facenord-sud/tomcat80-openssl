@@ -67,6 +67,15 @@
       </fix>
     </changelog>
   </subsection>
+  <subsection name="Jasper">
+    <changelog>
+      <fix>
+        <bug>57802</bug>: Correct the default impementation of
+        <code>convertToType()</code> provided by
+        <code>javax.el.ELResolver</code>. (markt)
+      </fix>
+    </changelog>
+  </subsection>
   <subsection name="Web applications">
     <changelog>
       <fix>
@@ -84,7 +93,7 @@
     </changelog>
   </subsection>
 </section>
-<section name="Tomcat 8.0.22 (markt)" rtext="release in progress">
+<section name="Tomcat 8.0.22 (markt)" rtext="2015-05-05">
   <subsection name="Catalina">
     <changelog>
       <fix>
