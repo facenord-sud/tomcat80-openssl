@@ -164,7 +164,6 @@
   <property name="tomcat-jdbc-src.jar" value="${tomcat.pool}/tomcat-jdbc-src.jar"/>
 
   <!-- Tests To Run -->
-  <property name="test.name" value="**/Test*.java"/>
   <property name="test.formatter" value="-Dorg.apache.juli.formatter=java.util.logging.SimpleFormatter"/>
   <property name="test.relaxTiming" value="false"/>
 
@@ -1380,9 +1379,16 @@
   </target>
   <target name="test-nio2-openssl" description="Test the openssl implementation in Nio2"
           depends="test-compile,deploy,cobertura-instrument,test-openssl-exists,test-apr-exists">
-      <property name="test.entry" value="org.apache.tomcat.util.net.TestSsl"/>
+      <property name="test.name" value="org/apache/tomcat/util/net/**.java"/>
           <runtests protocol="org.apache.coyote.http11.Http11Nio2Protocol"
               extension=".OpenSSL.NIO2"
+              sslImplementation="ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation"/>
+  </target>
+  <target name="test-nio-openssl" description="Test the openssl implementation in Nio"
+          depends="test-compile,deploy,cobertura-instrument,test-openssl-exists,test-apr-exists">
+      <!--<property name="test.entry" value="org.apache.tomcat.util.net.TestSsl"/>-->
+          <runtests protocol="org.apache.coyote.http11.Http11NioProtocol"
+              extension=".OpenSSL.NIO"
               sslImplementation="ch.uninbf.mcs.tomcatopenssl.net.ssl.open.OpenSSLImplementation"/>
   </target>
 

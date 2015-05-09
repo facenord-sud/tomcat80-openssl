@@ -42,6 +42,9 @@ test.haltonfailure=false
 # Activate AccessLog during testing
 test.accesslog=false
 
+# The tests you which to run
+test.name=**/Test*.java
+
 # Note the Cobertura code coverage tool is GPLv2 licensed
 test.cobertura=false
 
