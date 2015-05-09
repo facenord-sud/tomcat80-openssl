@@ -173,7 +173,6 @@ public final class OpenSslEngine extends SSLEngine {
         if (sslCtx == 0) {
             throw new NullPointerException("sslContext");
         }
-
         ssl = SSL.newSSL(sslCtx, !clientMode);
         networkBIO = SSL.makeNetworkBIO(ssl);
         this.fallbackApplicationProtocol = fallbackApplicationProtocol;

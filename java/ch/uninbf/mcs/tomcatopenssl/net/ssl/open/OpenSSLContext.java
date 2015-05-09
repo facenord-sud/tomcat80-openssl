@@ -70,6 +70,7 @@ public class OpenSSLContext extends SslContext {
 
     private static final List<String> DEFAULT_CIPHERS;
     private static final List<String> AVAILABLE_PROTOCOLS = new ArrayList<>();
+    private OpenSslEngine engine;
 
     private OpenSslServerSessionContext sessionContext;
 
@@ -124,11 +125,12 @@ public class OpenSSLContext extends SslContext {
     private final long aprPool;
     protected final long ctx;
     private static final Log logger = LogFactory.getLog(OpenSSLContext.class);
-     @SuppressWarnings("unused")
+    @SuppressWarnings("unused")
     private volatile int aprPoolDestroyed;
-    private static final AtomicIntegerFieldUpdater<OpenSSLContext> DESTROY_UPDATER 
+    private static final AtomicIntegerFieldUpdater<OpenSSLContext> DESTROY_UPDATER
             = AtomicIntegerFieldUpdater.newUpdater(OpenSSLContext.class, "aprPoolDestroyed");
     static final CertificateFactory X509_CERT_FACTORY;
+    private boolean initialized = false;
 
     static {
         List<String> ciphers = new ArrayList<>();
@@ -220,18 +222,23 @@ public class OpenSSLContext extends SslContext {
      */
     @Override
     public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws SSLException {
-        try {
-        synchronized (OpenSSLContext.class) {
-            init();
-            if (kms != null) {
-                init(kms);
-            }
-            if (tms != null) {
-                init(tms);
-            }
-            sessionContext = new OpenSslServerSessionContext(ctx);
+        if (initialized) {
+            logger.error("SSL_CTX is already initialized and future initilaizations will be ignored");
+            return;
         }
-        } catch(SSLException e) {
+        try {
+            synchronized (OpenSSLContext.class) {
+                init();
+                if (kms != null) {
+                    init(kms);
+                }
+                if (tms != null) {
+                    init(tms);
+                }
+                sessionContext = new OpenSslServerSessionContext(ctx);
+                initialized = true;
+            }
+        } catch (SSLException e) {
             destroyPools();
             throw new SSLException(e);
         }
@@ -363,7 +370,9 @@ public class OpenSSLContext extends SslContext {
 
     @Override
     public SSLEngine createSSLEngine() {
-        return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
+        if(engine == null)
+            engine = new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
+        return engine;
     }
 
     @Override
