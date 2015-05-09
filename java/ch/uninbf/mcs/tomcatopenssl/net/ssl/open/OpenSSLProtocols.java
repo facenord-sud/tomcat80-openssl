@@ -27,14 +27,17 @@ import java.util.List;
  */
 public class OpenSSLProtocols {
 
-    private static final List<String> openSSLProtocols = new ArrayList<>();
-
-    public static String[] getProtocols(String preferredJSSE) {
+    private List<String> openSSLProtocols = new ArrayList<>();
+    
+    public OpenSSLProtocols(String preferredJSSEProto) {
         Collections.addAll(openSSLProtocols, "TLSv1.2", "TLSv1.1", "TLSv1", "SSLv3", "SSLv2");
-        if(openSSLProtocols.contains(preferredJSSE)) {
-            openSSLProtocols.remove(preferredJSSE);
-            openSSLProtocols.add(0, preferredJSSE);
+        if(openSSLProtocols.contains(preferredJSSEProto)) {
+            openSSLProtocols.remove(preferredJSSEProto);
+            openSSLProtocols.add(0, preferredJSSEProto);
         }
+    }
+
+    public String[] getProtocols() {
         return openSSLProtocols.toArray(new String[openSSLProtocols.size()]);
     }
 }

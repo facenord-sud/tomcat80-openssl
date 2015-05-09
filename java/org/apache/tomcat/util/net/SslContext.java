@@ -34,17 +34,13 @@ import org.apache.juli.logging.LogFactory;
 public abstract class SslContext {
 
     private static final Log logger = LogFactory.getLog(SslContext.class);
-    private static final HashMap<String, SslContext> instances = new HashMap<>();
 
     public static SslContext getInstance(String className, String protocol)
             throws ClassNotFoundException {
-        if (instances.containsKey(className))
-            return instances.get(className);
         try {
             Class<?> clazz = Class.forName(className);
             SslContext context = (SslContext) clazz.newInstance();
             context.initiateProtocol(protocol);
-            instances.put(className, context);
             return context;
         } catch (Exception e) {
             if (logger.isDebugEnabled())

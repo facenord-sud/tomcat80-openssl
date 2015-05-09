@@ -180,7 +180,9 @@ public class OpenSSLContext extends SslContext {
                 SSLContext.setOptions(ctx, SSL.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
                 success = true;
             }
-        } finally {
+        } catch(Exception e) {
+            throw new SSLException("Unable to initialize the SSL_CTX", e);
+        }finally {
             if (!success) {
                 destroyPools();
             }
@@ -223,7 +225,7 @@ public class OpenSSLContext extends SslContext {
     @Override
     public void init(KeyManager[] kms, TrustManager[] tms, SecureRandom sr) throws SSLException {
         if (initialized) {
-            logger.error("SSL_CTX is already initialized and future initilaizations will be ignored");
+            logger.error("SSL_CTX is already initialized, this and future initilaizations will be ignored");
             return;
         }
         try {
@@ -237,6 +239,7 @@ public class OpenSSLContext extends SslContext {
                 }
                 sessionContext = new OpenSslServerSessionContext(ctx);
                 initialized = true;
+                logger.info("SSL_CTX is ready to use");
             }
         } catch (SSLException e) {
             destroyPools();
@@ -313,8 +316,8 @@ public class OpenSSLContext extends SslContext {
             throw new SSLException("failed to set cipher suite: " + this.ciphers, e);
         }
 
-        SSLContext.setNpnProtos(ctx, OpenSSLProtocols.getProtocols(enabledProtocol), SSL.SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL);
-
+        String[] protos = new OpenSSLProtocols(enabledProtocol).getProtocols();
+        SSLContext.setNpnProtos(ctx, protos, SSL.SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL);
         /* Set session cache size, if specified */
         if (sessionCacheSize > 0) {
             SSLContext.setSessionCacheSize(ctx, sessionCacheSize);
@@ -432,5 +435,19 @@ public class OpenSSLContext extends SslContext {
         cipher.init(Cipher.DECRYPT_MODE, pbeKey, encryptedPrivateKeyInfo.getAlgParameters());
 
         return encryptedPrivateKeyInfo.getKeySpec(cipher);
+    }
+    
+    @Override
+    @SuppressWarnings("FinalizeDeclaration")
+    protected final void finalize() throws Throwable {
+        logger.info("Finalization of SSL_CTX");
+        super.finalize();
+        synchronized (OpenSSLContext.class) {
+            if (ctx != 0) {
+                SSLContext.free(ctx);
+                logger.info("Finalization of SSL_CTX");
+            }
+        }
+        destroyPools();
     }
 }
