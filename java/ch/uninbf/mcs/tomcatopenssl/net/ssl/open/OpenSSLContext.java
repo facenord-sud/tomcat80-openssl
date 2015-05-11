@@ -70,7 +70,6 @@ public class OpenSSLContext extends SslContext {
 
     private static final List<String> DEFAULT_CIPHERS;
     private static final List<String> AVAILABLE_PROTOCOLS = new ArrayList<>();
-    private OpenSslEngine engine;
 
     private OpenSslServerSessionContext sessionContext;
 
@@ -373,9 +372,7 @@ public class OpenSSLContext extends SslContext {
 
     @Override
     public SSLEngine createSSLEngine() {
-        if(engine == null)
-            engine = new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
-        return engine;
+        return new OpenSslEngine(ctx, defaultProtocol, false, sessionContext);
     }
 
     @Override

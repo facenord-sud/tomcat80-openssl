@@ -530,11 +530,6 @@ public class Nio2Endpoint extends AbstractEndpoint<Nio2Channel> {
                 awaitBytes(socketWrapper);
             }
         } catch (Throwable t) {
-            System.out.println(t.getCause());
-            System.out.println(t.getMessage());
-            StackTraceElement[] elements = t.getStackTrace();
-            for(StackTraceElement e : elements)
-                System.out.println("Caused by: " + e.getClassName() + "." + e.getMethodName() + "():" + e.getLineNumber());
             ExceptionUtils.handleThrowable(t);
             try {
                 log.error("",t);
