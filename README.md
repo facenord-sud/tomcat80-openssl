@@ -3,15 +3,15 @@
 
 This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintability will be easier compared to solutions using C sockets, like the APR connector.
 
-With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our (https://github.com/rmaucher/tomcat-native-openssl)[fork of tomcat-native] instaled.
+With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our  [fork of tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) instaled.
 
 ## Installation
 
 This project will be soon integrated into Tomcat. But for now, you will need to build this project:
 
-1. [https://github.com/facenord-sud/tomcat80-openssl](Clone) this project
-2. Build it like the standard Tomcat project. Building instruction about how to buil Tomcat can be found [https://tomcat.apache.org/tomcat-8.0-doc/building.html](here). Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
-3. Clone our [https://github.com/rmaucher/tomcat-native-openssl](forked Tomcat-native) project, called tomcat-native-openssl
+1. Clone [this project](https://github.com/facenord-sud/tomcat80-openssl)
+2. Build it like the standard Tomcat project. Building instruction about how to buil Tomcat can be found [here](https://tomcat.apache.org/tomcat-8.0-doc/building.html). Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
+3. Clone our [forked Tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) project, called tomcat-native-openssl
 4. Built it like the normal tomcat-native project:
 ```bash
 sh buildconf --with-apr=apr_source_location.
