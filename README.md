@@ -7,11 +7,12 @@
 4. [How it works](#how-it-works)
   1. [Overview](#overview)
   2. [Details](#details)
+  
 This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintability will be easier compared to solutions using C sockets, like the APR connector.
 
 With our project, a user can has the NIO or NIO2 connector enabled and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our  [fork of tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) instaled.
 
-## Installation
+## 1. Installation
 
 This project will be soon integrated into Tomcat. But for now, you will need to build this project:
 
@@ -29,7 +30,7 @@ make
   CATALINA_OPTS="$CATALINA_OPTS -Djava.library.path=/Users/me/tomcat-native-openssl/native/.libs"
 ```
 
-## Usage
+## 2. Usage
 First of all to use OpenSSL with NIO/NIO2 connectors, you need to have SSL certificates and keys. For testing, you can use the file `localhost-cert.pem` and `localhost-key.pem` generated for testing and located in [conf/](conf/).
 
 After that you need to edit the file `$CATALINA_BASE/conf/server.xml` and add it a new connector using the NIO or NIO2 implementation and our OpenSSL implementation. It can be configured like this:
@@ -48,7 +49,7 @@ $CATALINE_BASE/bin/startup.sh
 ````
 and browse to https://localhost:8443 !!!
 
-## Results
+## 3. Results
 We run extended benchmarks to measure the performance of this new TLS implementation. The benchhmarks matches the best possible expectations as we could see it above.
 
 ![](throughput.jpg)
@@ -61,9 +62,9 @@ Again, our implementation is better than the two other implementation in Tomcat.
 
 Tests have been performed with Tomcat running on a dedicated server (RHEL 6.4 2 x 10 G bounded boards / IBM x3650 / Intel Xeon 2.50 GHz  2 x4 cores cpu 6144 KB cache / Total:  8 cores.) and with 4 clients making 10 requests simultanesouly for a total concurrency of 40.
 
-## How it works
+## 4. How it works
 
-### Overview
+### 4.1 Overview
 ![Overview of our solution](overview.jpg)
 
 The image above shows how OpenSSL for Tomcat (Tomcat-openssl) is using code of different project and is integrated into Tomcat.
@@ -76,7 +77,7 @@ Tomcat-openssl uses the same class structure as the JSSE implementation into Tom
 #### Tomcat-netty implementation
 For the use of the tomcat-netty library, we did not need to reinvent the wheel. The netty project already provides an implementation and we ported the code from Netty to Tomcat. For example the classes OpenSslContext and SSLEngine are copied from the Netty project and adapted to the Tomcat strcuture and to use NIO/NIO2 for I/O operations.
 
-### Details
+### 4.2 Details
 ![Detail of our implementation](impl.jpg)
 
 The above image shows the most important part of the TLS implementation, the SSL context and the SSL engine. For brievty, this diagram is simplified and a lot of informations are omitted.
