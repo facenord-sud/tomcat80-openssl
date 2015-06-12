@@ -3,30 +3,30 @@
 
 This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintability will be easier compared to solutions using C sockets, like the APR connector.
 
-With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our fork of tomcat-netty instaled.
+With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our [https://github.com/rmaucher/tomcat-native-openssl](fork of tomcat-native) instaled.
 
 ## Installation
 
 This project will be soon integrated into Tomcat. But for now, you will need to build this project:
 
-1. Clone this project
-2. Build it like the standard Tomcat project. Building instruction about how to buil Tomcat can be found here. Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
-3. Clone our forked Tomcat-netty project, called tomcat-native-openssl
+1. [https://github.com/facenord-sud/tomcat80-openssl](Clone) this project
+2. Build it like the standard Tomcat project. Building instruction about how to buil Tomcat can be found [https://tomcat.apache.org/tomcat-8.0-doc/building.html](here). Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
+3. Clone our [https://github.com/rmaucher/tomcat-native-openssl](forked Tomcat-native) project, called tomcat-native-openssl
 4. Built it like the normal tomcat-native project:
 ```bash
 sh buildconf --with-apr=apr_source_location.
 configure --with-apr=apr_install_location --with-ssl=openssl_install_location
 make
 ```
-5. In the file `$CATALINA_HOME/bin/setenv.sh` (create it if not exists) set the path to the builded tomcat-native-openssl library. For example, if the cloned tomcat-native-openssl project is located under `/Users/me/tomcat-native-openssl/` you need to add this line:
+5. In the file `$CATALINA_BASE/bin/setenv.sh` (create it if not exists) set the path to the builded tomcat-native-openssl library. For example, if the cloned tomcat-native-openssl project is located under `/Users/me/tomcat-native-openssl/` you need to add this line:
 ```bash
   CATALINA_OPTS="$CATALINA_OPTS -Djava.library.path=/Users/me/tomcat-native-openssl/native/.libs"
 ```
 
 ## Usage
-First of all to use OpenSSL with NIO/NIO2 connectors, you need to have SSL certificates and keys. For testing, you can use the file localhost-cert.pem and localhost-key.pem generated for testing and located in [conf/](conf/).
+First of all to use OpenSSL with NIO/NIO2 connectors, you need to have SSL certificates and keys. For testing, you can use the file `localhost-cert.pem` and `localhost-key.pem` generated for testing and located in [conf/](conf/).
 
-After that you need to edit the file $CATALINA_BASE/conf/server.xml and add it a new connector using the NIO or NIO2 implementation and our OpenSSL implementation. It can be configured like this:
+After that you need to edit the file `$CATALINA_BASE/conf/server.xml` and add it a new connector using the NIO or NIO2 implementation and our OpenSSL implementation. It can be configured like this:
 ```xml
 <Connector port="8443" protocol="org.apache.coyote.http11.Http11Nio2Protocol"
        SSLEnabled="true" scheme="https" secure="true"
@@ -53,7 +53,7 @@ We can see here that our implementation (in red) is better than the two existing
 
 Again, our implementation is better than the two other implementation in Tomcat. But in this graph httpd requires still less CPU usage.
 
-Tests have been performed with Tomcat running on a dedicated server (RHEL 6.4 2 x 10 G bounded boards /IBM x3650 /Intel Xeon 2.50 GHz  2 x4 cores cpu 6144 KB cache / Total:  8 cores.) and with 4 clients making 10 requests simultanesouly for a total concurrency of 40.
+Tests have been performed with Tomcat running on a dedicated server (RHEL 6.4 2 x 10 G bounded boards / IBM x3650 / Intel Xeon 2.50 GHz  2 x4 cores cpu 6144 KB cache / Total:  8 cores.) and with 4 clients making 10 requests simultanesouly for a total concurrency of 40.
 
 ## How it works
 
@@ -82,3 +82,9 @@ The SSL context is represented in our implementation by the class `OpenSSLContex
 The SSL engine is responible of handsaking(key exchange), encrypting and uncrypting data with the client. In our implementation, it is represented by the class `OpenSSLEngine` and created and intiatied by the class `OpenSSLContext` at a new client connection. The methods `wrap()`/`unwrap()` are for encrypting/uncrypting data, `handshake()` for handshaking and `release()` when a connection is finished. All these methods are called by the class `SecureNIO2Channel` which is responible of manging communication with the client.
 
 We can see that OpenSSLEngine extends from the class SSLEngine of the JSSE API. Doing like thihs provide compatibility with the JSSE implementation into Tomcat and our solution can be easily integrated into the NIO/NIO2 connector.
+
+Colors:
+* Green: Ported Netty's code
+* Red: Tomcat's code
+* Blue: Our code
+* Black: Java standard language (here from the JSSE API)
