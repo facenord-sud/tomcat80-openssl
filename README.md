@@ -3,7 +3,7 @@
 
 This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintability will be easier compared to solutions using C sockets, like the APR connector.
 
-With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our [https://github.com/rmaucher/tomcat-native-openssl](fork of tomcat-native) instaled.
+With our project, a user can use the NIO or NIO2 connector and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our (https://github.com/rmaucher/tomcat-native-openssl)[fork of tomcat-native] instaled.
 
 ## Installation
 
