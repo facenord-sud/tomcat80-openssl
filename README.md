@@ -8,16 +8,16 @@
   1. [Overview](#overview)
   2. [Details](#details)
   
-This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintability will be easier compared to solutions using C sockets, like the APR connector.
+This project aims to provide better performances by using the OpenSSL library instead of the JSSE (Java Secure Socket Extension) API for the TLS encryption. Combined with the NIO/NIO2 connector, maintainability will be easier compared to solutions using C sockets, like the APR connector.
 
-With our project, a user can has the NIO or NIO2 connector enabled and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our  [fork of tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) instaled.
+With our project, a user can has the NIO or NIO2 connector enabled and choose to use JSSE or OpenSSL for the TLS encryption. The only requirements is to have OpenSSL and our  [fork of tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) installed.
 
 ## 1. Installation
 
 This project will be soon integrated into Tomcat. But for now, you will need to build this project:
 
 1. Clone [this project](https://github.com/facenord-sud/tomcat80-openssl)
-2. Build it like the standard Tomcat project. Building instruction about how to buil Tomcat can be found [here](https://tomcat.apache.org/tomcat-8.0-doc/building.html). Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
+2. Build it like the standard Tomcat project. Building instruction about how to build Tomcat can be found [here](https://tomcat.apache.org/tomcat-8.0-doc/building.html). Basically, you need to copy `build.properties.default` to `build.properties`, edit it and run the command `ant deploy`
 3. Clone our [forked Tomcat-native](https://github.com/rmaucher/tomcat-native-openssl) project, called tomcat-native-openssl
 4. Built it like the normal tomcat-native project:
 ```bash
@@ -50,17 +50,17 @@ $CATALINE_BASE/bin/startup.sh
 and browse to https://localhost:8443 !!!
 
 ## 3. Results
-We run extended benchmarks to measure the performance of this new TLS implementation. The benchhmarks matches the best possible expectations as we could see it above.
+We run extended benchmarks to measure the performance of this new TLS implementation. The benchmarks matches the best possible expectations as we could see it above.
 
 ![](throughput.jpg)
 
-We can see here that our implementation (in red) is better than the two existing implementation in Tomcat (in violet and blue) and has the same performance of httpd of Apache. Notice that currently, when you use the NIO/NIO2 connector with the TLS encryption enabled you have performance approching the curve in violet. Our solution is a huge improvments compared to the JSSE implementation.
+We can see here that our implementation (in red) is better than the two existing implementation in Tomcat (in violet and blue) and has the same performance of httpd of Apache. Notice that currently, when you use the NIO/NIO2 connector with the TLS encryption enabled you have performance approaching the curve in violet. Our solution is a huge improvements compared to the JSSE implementation.
 
 ![](cpu.jpg)
 
 Again, our implementation is better than the two other implementation in Tomcat. But in this graph httpd requires still less CPU usage.
 
-Tests have been performed with Tomcat running on a dedicated server (RHEL 6.4 2 x 10 G bounded boards / IBM x3650 / Intel Xeon 2.50 GHz  2 x4 cores cpu 6144 KB cache / Total:  8 cores.) and with 4 clients making 10 requests simultanesouly for a total concurrency of 40.
+Tests have been performed with Tomcat running on a dedicated server (RHEL 6.4 2 x 10 G bounded boards / IBM x3650 / Intel Xeon 2.50 GHz  2 x4 cores cpu 6144 KB cache / Total:  8 cores.) and with 4 clients making 10 requests simultaneously for a total concurrency of 40.
 
 ## 4. How it works
 
@@ -75,20 +75,20 @@ For the TLS encryption, it uses a fork of the Tomcat-netty library. Basically th
 Tomcat-openssl uses the same class structure as the JSSE implementation into Tomcat. It means that it extends and implements from the same classes and interfaces, which permits an easy integration in the NIO/NIO2 connector.
 
 #### Tomcat-netty implementation
-For the use of the tomcat-netty library, we did not need to reinvent the wheel. The netty project already provides an implementation and we ported the code from Netty to Tomcat. For example the classes OpenSslContext and SSLEngine are copied from the Netty project and adapted to the Tomcat strcuture and to use NIO/NIO2 for I/O operations.
+For the use of the tomcat-netty library, we did not need to reinvent the wheel. The netty project already provides an implementation and we ported the code from Netty to Tomcat. For example the classes OpenSslContext and SSLEngine are copied from the Netty project and adapted to the Tomcat structure and to use NIO/NIO2 for I/O operations.
 
 ### 4.2 Details
 ![Detail of our implementation](impl.jpg)
 
-The above image shows the most important part of the TLS implementation, the SSL context and the SSL engine. For brievty, this diagram is simplified and a lot of informations are omitted.
+The above image shows the most important part of the TLS implementation, the SSL context and the SSL engine. For brevity, this diagram is simplified and a lot of informations are omitted.
 
 #### SSL context
-The SSL context is represented in our implementation by the class `OpenSSLContext` The SSL context is responible of configuring ciphers suites, managing certificates, preparing and instantiating the SSL Engine, notably. It is created when Tomcat is starting up and intianited by the class `OpenSSLSocketFactory`.
+The SSL context is represented in our implementation by the class `OpenSSLContext` The SSL context is responsible of configuring ciphers suites, managing certificates, preparing and instantiating the SSL Engine, notably. It is created when Tomcat is starting up and instantiated by the class `OpenSSLSocketFactory`.
 
 #### SSL Engine
-The SSL engine is responible of handsaking(key exchange), encrypting and uncrypting data with the client. In our implementation, it is represented by the class `OpenSSLEngine` and created and intiatied by the class `OpenSSLContext` at a new client connection. The methods `wrap()`/`unwrap()` are for encrypting/uncrypting data, `handshake()` for handshaking and `release()` when a connection is finished. All these methods are called by the class `SecureNIO2Channel` which is responible of manging communication with the client.
+The SSL engine is responsible of handshaking(key exchange), encrypting and unencrypting data with the client. In our implementation, it is represented by the class `OpenSSLEngine` created and instantiated by the class `OpenSSLContext` at a new client connection. The methods `wrap()`/`unwrap()` are for encrypting/unencrypting data, `handshake()` for handshaking and `release()` when a connection is finished. All these methods are called by the class `SecureNIO2Channel` which is responsible of managing communication with the client.
 
-We can see that OpenSSLEngine extends from the class SSLEngine of the JSSE API. Doing like thihs provide compatibility with the JSSE implementation into Tomcat and our solution can be easily integrated into the NIO/NIO2 connector.
+We can see that OpenSSLEngine extends from the class SSLEngine of the JSSE API. Doing like this provide compatibility with the JSSE implementation into Tomcat and our solution can be easily integrated into the NIO/NIO2 connector.
 
 Colors:
 * Green: Ported Netty's code
